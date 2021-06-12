@@ -1,0 +1,5 @@
+numpy==1.19.2
+pandas==1.2.4
+tensorflow==2.5.0
+scipy==1.6.3
+numba==0.53.1
