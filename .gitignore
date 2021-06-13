@@ -1,4 +1,4 @@
-./venv
-wechat_algo_data1.zip
+venv
 .data
-.idea
+/.data/
+/.idea/

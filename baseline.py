@@ -13,8 +13,8 @@ from evaluation import uAUC, compute_weighted_score
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string('model_checkpoint_dir', './data/model', 'model dir')
-flags.DEFINE_string('root_path', './data/', 'data dir')
+flags.DEFINE_string('model_checkpoint_dir', os.path.join(".data", "model"), 'model dir')
+flags.DEFINE_string('root_path', '.data', 'data dir')
 flags.DEFINE_integer('batch_size', 128, 'batch_size')
 flags.DEFINE_integer('embed_dim', 10, 'embed_dim')
 flags.DEFINE_float('learning_rate', 0.1, 'learning_rate')

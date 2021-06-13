@@ -194,7 +194,8 @@ def score(result_data, label_data, mode="初赛"):
     
 if __name__ == '__main__':
     t = time.time()
-    label_data = open('data/evaluate/evaluate_all_13_generate_sample.csv', 'r')
-    result_data = open('data/evaluate/submit_1619332123.csv', 'r')
+    label_data = open('.data/evaluate/evaluate_all_13_generate_sample.csv', 'r')
+    # Change to match that under .data/evaluate/submit_xxx.csv
+    result_data = open('.data/evaluate/submit_1623567581.csv', 'r')
     res = score(result_data, label_data, mode='初赛')
     print('Time cost: %.2f s'%(time.time()-t))
