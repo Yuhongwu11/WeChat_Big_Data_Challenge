@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 # 存储数据的根目录
-ROOT_PATH = "./data"
+ROOT_PATH = os.path.join(".", ".data")
 # 比赛数据集路径
 DATASET_PATH = os.path.join(ROOT_PATH, "wechat_algo_data1")
 # 训练集
