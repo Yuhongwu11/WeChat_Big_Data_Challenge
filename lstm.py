@@ -13,11 +13,11 @@ torch.manual_seed(2021)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 # reading dataset
-ROOT_PATH = "./data/"
+ROOT_PATH = os.path.join(".", ".data")
+MODEL_PATH = os.path.join(ROOT_PATH, "model")
 
 
 def get_file(stage, action):
-
     if stage in ["online_train", "offline_train"]:
         action = action
     else:
@@ -43,8 +43,8 @@ def load_data(stage, action, batch_size, shuffle):
     device_embedding = embedding(torch.from_numpy(df['device'].values).long())
 
     features = torch.stack(
-            (user_embedding, feed_embedding, author_embedding, bgm_singer_embedding, bgm_song_embedding,
-             video_embedding, device_embedding), dim=1)
+        (user_embedding, feed_embedding, author_embedding, bgm_singer_embedding, bgm_song_embedding,
+         video_embedding, device_embedding), dim=1)
     labels = torch.from_numpy(df[action].values)
 
     ds = TensorDataset(features, labels)
@@ -64,7 +64,7 @@ class LSTM1(nn.Module):
                             num_layers=num_layers,
                             batch_first=True,
                             bidirectional=bidirectional)
-        self.linear_1 = nn.Linear(hidden_dim*2, hidden_dim*1)
+        self.linear_1 = nn.Linear(hidden_dim * 2, hidden_dim * 1)
         self.relu = nn.ReLU()
         self.linear_2 = nn.Linear(hidden_dim, output_dim)
         self.sigmoid = nn.Sigmoid()
@@ -73,7 +73,7 @@ class LSTM1(nn.Module):
     def forward(self, x):
         batch_size = x.size(0)
         out, hidden = self.lstm(x)
-        out = out.reshape(-1, self.hidden_dim*2)
+        out = out.reshape(-1, self.hidden_dim * 2)
         linear1_out = self.linear_1(out)
         linear1_out = self.relu(linear1_out)
         linear2_out = self.linear_2(linear1_out)
@@ -93,7 +93,7 @@ def train(stage, action, model, criterion, optimizer, num_epochs, batch_size):
             data = dataset[0].to(device)
             label = dataset[1].to(device)
             optimizer.zero_grad()
-            output= model(data)
+            output = model(data)
             loss = criterion(output, label.float())
             train_loss.append(loss.item())
             loss.backward(retain_graph=True)
@@ -152,8 +152,7 @@ def del_file(path):
 
 
 def save_model(stage, action, model):
-    PATH = "./data/model"
-    model_checkpoint_stage_dir = os.path.join(PATH, stage, action)
+    model_checkpoint_stage_dir = os.path.join(MODEL_PATH, stage, action)
     if not os.path.exists(model_checkpoint_stage_dir):
         # 如果模型目录不存在，则创建该目录
         os.makedirs(model_checkpoint_stage_dir)
@@ -168,8 +167,7 @@ def load_model(stage, action):
         stage = "offline_train"
     else:
         stage = "online_train"
-    PATH = "./data/model"
-    model_checkpoint_stage_dir = os.path.join(PATH, stage, action)
+    model_checkpoint_stage_dir = os.path.join(MODEL_PATH, stage, action)
     model = torch.load(model_checkpoint_stage_dir)
 
     return model
@@ -246,7 +244,7 @@ def main(argv):
         print(predict_time_cost)
         print('单个目标行为2000条样本平均预测耗时（毫秒）：')
         print(np.mean([v for v in predict_time_cost.values()]))
-    print('Time cost: %.2f s' % (time.time()-t))
+    print('Time cost: %.2f s' % (time.time() - t))
 
 
 if __name__ == "__main__":
