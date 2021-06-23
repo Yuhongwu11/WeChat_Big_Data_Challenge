@@ -159,7 +159,9 @@ def save_model(stage, action, model):
     elif stage in ["online_train", "offline_train"]:
         # 训练时如果模型目录已存在，则清空目录
         del_file(model_checkpoint_stage_dir)
-    torch.save(model, model_checkpoint_stage_dir)
+    file_name = "model_checkpoint_{action}.pt".format(action=action)
+    checkpoint_path = os.path.join(model_checkpoint_stage_dir, file_name)
+    torch.save(model, checkpoint_path)
 
 
 def load_model(stage, action):
@@ -167,7 +169,8 @@ def load_model(stage, action):
         stage = "offline_train"
     else:
         stage = "online_train"
-    model_checkpoint_stage_dir = os.path.join(MODEL_PATH, stage, action)
+    file_name = "model_checkpoint_{action}.pt".format(action=action)
+    model_checkpoint_stage_dir = os.path.join(MODEL_PATH, stage, action, file_name)
     model = torch.load(model_checkpoint_stage_dir)
 
     return model
