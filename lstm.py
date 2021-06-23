@@ -63,8 +63,7 @@ class LSTM1(nn.Module):
                             hidden_size=hidden_dim,
                             num_layers=num_layers,
                             batch_first=True,
-                            bidirectional=bidirectional,
-                            dropout=dropout)
+                            bidirectional=bidirectional)
         self.linear_1 = nn.Linear(hidden_dim*2, hidden_dim*1)
         self.relu = nn.ReLU()
         self.linear_2 = nn.Linear(hidden_dim, output_dim)
@@ -74,13 +73,14 @@ class LSTM1(nn.Module):
     def forward(self, x):
         batch_size = x.size(0)
         out, hidden = self.lstm(x)
-        out = self.dropout(torch.cat((out[1], out[-1]), -1))
+        out = out.reshape(-1, self.hidden_dim*2)
         linear1_out = self.linear_1(out)
-        linear1_out = self.reLU(linear1_out)
+        linear1_out = self.relu(linear1_out)
         linear2_out = self.linear_2(linear1_out)
         sigmoid_out = self.sigmoid(linear2_out)
+        sigmoid_out = sigmoid_out.reshape(batch_size, -1)
         sigmoid_out = sigmoid_out[:, -1]
-        return sigmoid_out, hidden
+        return sigmoid_out
 
 
 def train(stage, action, model, criterion, optimizer, num_epochs, batch_size):
@@ -93,7 +93,7 @@ def train(stage, action, model, criterion, optimizer, num_epochs, batch_size):
             data = dataset[0].to(device)
             label = dataset[1].to(device)
             optimizer.zero_grad()
-            output, hidden = model(data)
+            output= model(data)
             loss = criterion(output, label.float())
             train_loss.append(loss.item())
             loss.backward(retain_graph=True)
