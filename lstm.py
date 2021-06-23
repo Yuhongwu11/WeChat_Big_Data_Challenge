@@ -13,7 +13,7 @@ torch.manual_seed(2021)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 # reading dataset
-ROOT_PATH = "./Data/"
+ROOT_PATH = "./data/"
 
 
 def get_file(stage, action):
@@ -54,22 +54,31 @@ def load_data(stage, action, batch_size, shuffle):
 
 
 class LSTM1(nn.Module):
-    def __init__(self, embedding_dim, hidden_dim, num_layers, output_dim):
+    def __init__(self, embedding_dim, hidden_dim, num_layers, output_dim, bidirectional, dropout):
         super(LSTM1, self).__init__()
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
 
-        self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers, batch_first=True)
-        self.linear = nn.Linear(hidden_dim, output_dim)
+        self.lstm = nn.LSTM(input_size=embedding_dim,
+                            hidden_size=hidden_dim,
+                            num_layers=num_layers,
+                            batch_first=True,
+                            bidirectional=bidirectional,
+                            dropout=dropout)
+        self.linear_1 = nn.Linear(hidden_dim*2, hidden_dim*1)
+        self.relu = nn.ReLU()
+        self.linear_2 = nn.Linear(hidden_dim, output_dim)
         self.sigmoid = nn.Sigmoid()
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
         batch_size = x.size(0)
         out, hidden = self.lstm(x)
-        out = out.reshape(-1, self.hidden_dim)
-        linear_out = self.linear(out)
-        sigmoid_out = self.sigmoid(linear_out)
-        sigmoid_out = sigmoid_out.reshape(batch_size, -1)
+        out = self.dropout(torch.cat((out[1], out[-1]), -1))
+        linear1_out = self.linear_1(out)
+        linear1_out = self.reLU(linear1_out)
+        linear2_out = self.linear_2(linear1_out)
+        sigmoid_out = self.sigmoid(linear2_out)
         sigmoid_out = sigmoid_out[:, -1]
         return sigmoid_out, hidden
 
@@ -132,9 +141,6 @@ def predict(stage, action, model, t):
 
 
 def del_file(path):
-    '''
-    删除path目录下的所有内容
-    '''
     ls = os.listdir(path)
     for i in ls:
         c_path = os.path.join(path, i)
@@ -146,7 +152,7 @@ def del_file(path):
 
 
 def save_model(stage, action, model):
-    PATH = "./Data/model"
+    PATH = "./data/model"
     model_checkpoint_stage_dir = os.path.join(PATH, stage, action)
     if not os.path.exists(model_checkpoint_stage_dir):
         # 如果模型目录不存在，则创建该目录
@@ -162,7 +168,7 @@ def load_model(stage, action):
         stage = "offline_train"
     else:
         stage = "online_train"
-    PATH = "./Data/model"
+    PATH = "./data/model"
     model_checkpoint_stage_dir = os.path.join(PATH, stage, action)
     model = torch.load(model_checkpoint_stage_dir)
 
@@ -184,10 +190,12 @@ def main(argv):
     learning_rate = 0.01
     embedding_dim = 10
     hidden_dim = 128
-    num_layers = 1
+    num_layers = 2
     output_dim = 1
+    bidirectional = True
+    dropout = 0.5
 
-    model = LSTM1(embedding_dim, hidden_dim, num_layers, output_dim)
+    model = LSTM1(embedding_dim, hidden_dim, num_layers, output_dim, bidirectional, dropout)
     model = model.to(device)
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
